@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClayAttend - Sistem Absensi Kelas Terintegrasi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- QRCode.js for Generating QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Html5-QRCode for Camera Scanning -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-main: #eef3fb;
+            --clay-white: #f7faff;
+            --clay-blue: #dbeafe;
+            --clay-mint: #d1fae5;
+            --clay-lavender: #ede9fe;
+            --clay-peach: #ffedd5;
+            --clay-pink: #fce7f3;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #eef3fb 0%, #f5f0ff 50%, #eefaf6 100%);
+            color: #334155;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Claymorphism Core Utilities */
+        .clay-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            box-shadow: 
+                14px 14px 28px rgba(174, 190, 214, 0.45),
+                -10px -10px 24px rgba(255, 255, 255, 0.95),
+                inset 4px 4px 10px rgba(255, 255, 255, 0.9),
+                inset -4px -4px 10px rgba(196, 210, 232, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .clay-panel-blue {
+            background: linear-gradient(145deg, #e0efff, #cde3ff);
+            border-radius: 28px;
+            box-shadow: 
+                10px 10px 20px rgba(163, 189, 224, 0.45),
+                -8px -8px 18px rgba(255, 255, 255, 0.9),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.85),
+                inset -3px -3px 8px rgba(154, 184, 224, 0.35);
+            border: 1.5px solid rgba(255, 255, 255, 0.75);
+        }
+
+        .clay-panel-mint {
+            background: linear-gradient(145deg, #dcfce7, #bbf7d0);
+            border-radius: 28px;
+            box-shadow: 
+                10px 10px 20px rgba(149, 207, 173, 0.4),
+                -8px -8px 18px rgba(255, 255, 255, 0.9),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.85),
+                inset -3px -3px 8px rgba(134, 201, 162, 0.35);
+            border: 1.5px solid rgba(255, 255, 255, 0.75);
+        }
+
+        .clay-panel-lavender {
+            background: linear-gradient(145deg, #f3e8ff, #e4d4ff);
+            border-radius: 28px;
+            box-shadow: 
+                10px 10px 20px rgba(182, 165, 217, 0.4),
+                -8px -8px 18px rgba(255, 255, 255, 0.9),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.85),
+                inset -3px -3px 8px rgba(173, 152, 214, 0.35);
+            border: 1.5px solid rgba(255, 255, 255, 0.75);
+        }
+
+        .clay-panel-peach {
+            background: linear-gradient(145deg, #ffedd5, #fed7aa);
+            border-radius: 28px;
+            box-shadow: 
+                10px 10px 20px rgba(217, 183, 148, 0.4),
+                -8px -8px 18px rgba(255, 255, 255, 0.9),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.85),
+                inset -3px -3px 8px rgba(214, 173, 134, 0.35);
+            border: 1.5px solid rgba(255, 255, 255, 0.75);
+        }
+
+        /* Clay Buttons */
+        .clay-btn {
+            border-radius: 20px;
+            font-weight: 700;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 
+                6px 6px 14px rgba(166, 182, 207, 0.45),
+                -4px -4px 10px rgba(255, 255, 255, 0.9),
+                inset 2px 2px 5px rgba(255, 255, 255, 0.7),
+                inset -2px -2px 5px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .clay-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.01);
+        }
+
+        .clay-btn:active:not(:disabled) {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 
+                inset 4px 4px 8px rgba(140, 158, 186, 0.45),
+                inset -3px -3px 8px rgba(255, 255, 255, 0.85);
+        }
+
+        .clay-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .clay-btn-primary {
+            background: linear-gradient(145deg, #60a5fa, #3b82f6);
+            color: white;
+            box-shadow: 
+                8px 8px 16px rgba(59, 130, 246, 0.35),
+                -4px -4px 12px rgba(255, 255, 255, 0.9),
+                inset 2px 2px 6px rgba(255, 255, 255, 0.45),
+                inset -3px -3px 6px rgba(29, 78, 216, 0.35);
+        }
+
+        .clay-btn-mint {
+            background: linear-gradient(145deg, #34d399, #10b981);
+            color: white;
+            box-shadow: 
+                8px 8px 16px rgba(16, 185, 129, 0.35),
+                -4px -4px 12px rgba(255, 255, 255, 0.9),
+                inset 2px 2px 6px rgba(255, 255, 255, 0.45),
+                inset -3px -3px 6px rgba(4, 120, 87, 0.35);
+        }
+
+        .clay-btn-lavender {
+            background: linear-gradient(145deg, #a78bfa, #8b5cf6);
+            color: white;
+            box-shadow: 
+                8px 8px 16px rgba(139, 92, 246, 0.35),
+                -4px -4px 12px rgba(255, 255, 255, 0.9),
+                inset 2px 2px 6px rgba(255, 255, 255, 0.45),
+                inset -3px -3px 6px rgba(109, 40, 217, 0.35);
+        }
+
+        .clay-btn-danger {
+            background: linear-gradient(145deg, #fb7185, #f43f5e);
+            color: white;
+            box-shadow: 
+                8px 8px 16px rgba(244, 63, 94, 0.3),
+                -4px -4px 12px rgba(255, 255, 255, 0.9),
+                inset 2px 2px 6px rgba(255, 255, 255, 0.45),
+                inset -3px -3px 6px rgba(190, 18, 60, 0.35);
+        }
+
+        /* Clay Inputs (Recessed / Sunken effect) */
+        .clay-input {
+            background: #eef4fc;
+            border-radius: 18px;
+            box-shadow: 
+                inset 5px 5px 10px rgba(176, 192, 217, 0.55),
+                inset -5px -5px 10px rgba(255, 255, 255, 0.95);
+            border: 1.5px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease;
+        }
+
+        .clay-input:focus {
+            outline: none;
+            background: #f5f9ff;
+            box-shadow: 
+                inset 4px 4px 8px rgba(147, 179, 230, 0.55),
+                inset -4px -4px 8px rgba(255, 255, 255, 1),
+                0 0 0 3px rgba(96, 165, 250, 0.3);
+        }
+
+        /* Clay Pill / Badge */
+        .clay-pill {
+            border-radius: 9999px;
+            box-shadow: 
+                3px 3px 6px rgba(174, 190, 214, 0.35),
+                -2px -2px 5px rgba(255, 255, 255, 0.9),
+                inset 1px 1px 3px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e6eef8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #b8c9e0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94add1;
+        }
+
+        /* QR Code Container Styling */
+        #qrcode img, #qrcode canvas {
+            margin: 0 auto;
+            border-radius: 16px;
+        }
+
+        /* Floating Blobs Background */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(60px);
+            z-index: -1;
+            opacity: 0.65;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-pulse-soft {
+            animation: pulse-soft 2.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 md:p-8">
+
+    <!-- Decorative Pastel Blobs -->
+    <div class="blob w-72 h-72 bg-blue-200 top-[-40px] left-[-40px]"></div>
+    <div class="blob w-80 h-80 bg-purple-200 bottom-[-60px] right-[-40px]"></div>
+    <div class="blob w-64 h-64 bg-emerald-200 top-[40%] left-[45%]"></div>
+
+    <!-- Custom Toast Notification Box (Replaces alert) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Custom Confirmation Modal (Replaces confirm) -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4">
+        <div class="clay-card p-6 sm:p-8 max-w-md w-full text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 clay-pill">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h3 id="confirm-title" class="text-xl font-extrabold text-slate-800 mb-2">Konfirmasi Tindakan</h3>
+            <p id="confirm-message" class="text-slate-600 text-sm mb-6">Apakah Anda yakin ingin melanjutkan?</p>
+            <div class="flex gap-3 justify-center">
+                <button id="confirm-cancel-btn" class="clay-btn px-5 py-2.5 bg-slate-100 text-slate-700 text-sm">Batal</button>
+                <button id="confirm-ok-btn" class="clay-btn clay-btn-danger px-5 py-2.5 text-sm">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Wrapper -->
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- Header & Role Switcher -->
+        <header class="clay-card p-4 sm:p-6 flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4 text-center sm:text-left">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white shadow-lg shrink-0">
+                    <i data-lucide="qr-code" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <div class="flex items-center justify-center sm:justify-start gap-2">
+                        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-800">ClayAttend</h1>
+                        <span class="clay-pill px-3 py-0.5 text-xs font-bold bg-indigo-100 text-indigo-700">v2.0</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-500 font-medium">Sistem Absensi Kelas Terintegrasi Barcode & Geolocation</p>
+                </div>
+            </div>
+
+            <!-- Role Switcher -->
+            <div class="clay-input p-1.5 flex items-center gap-2 w-full sm:w-auto">
+                <button id="btn-role-dosen" onclick="switchRole('dosen')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all bg-blue-500 text-white shadow-md">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Portal Dosen</span>
+                </button>
+                <button id="btn-role-mahasiswa" onclick="switchRole('mahasiswa')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all text-slate-600 hover:text-slate-900">
+                    <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                    <span>Portal Mahasiswa</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 1: PORTAL DOSEN (MANAGEMENT DASHBOARD)               -->
+        <!-- ========================================================= -->
+        <main id="view-dosen" class="space-y-6">
+            
+            <!-- Top Row: Session Control & QR Generator + Location Settings -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Column: QR Code Generator & Timer (5 cols) -->
+                <div class="lg:col-span-5 clay-card p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="clay-pill px-3.5 py-1 bg-blue-100 text-blue-700 text-xs font-extrabold uppercase tracking-wider">Sesi Barcode Aktif</span>
+                            <span id="qr-status-badge" class="clay-pill px-3 py-1 bg-slate-200 text-slate-600 text-xs font-bold">Belum Dibuat</span>
+                        </div>
+
+                        <!-- Meeting Selector -->
+                        <div class="mb-5">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Pertemuan Kuliah</label>
+                            <select id="dosen-meeting-select" onchange="onDosenMeetingChange()" class="clay-input w-full px-4 py-3 text-slate-800 font-bold text-sm cursor-pointer">
+                                <!-- Options 1-16 populated via JS -->
+                            </select>
+                        </div>
+
+                        <!-- QR Display Box -->
+                        <div class="clay-panel-blue p-6 text-center relative overflow-hidden mb-5">
+                            <div id="qr-placeholder" class="py-10 flex flex-col items-center justify-center text-slate-500">
+                                <div class="w-20 h-20 rounded-3xl bg-white/70 flex items-center justify-center mb-3 shadow-inner">
+                                    <i data-lucide="qr-code" class="w-10 h-10 text-blue-400"></i>
+                                </div>
+                                <p class="text-sm font-bold text-slate-700">Barcode Belum Diaktifkan</p>
+                                <p class="text-xs text-slate-500 mt-1 max-w-xs">Atur lokasi kelas terlebih dahulu lalu klik tombol di bawah untuk membuat QR absensi berlaku 5 menit.</p>
+                            </div>
+
+                            <div id="qr-active-box" class="hidden flex-col items-center">
+                                <div class="bg-white p-4 rounded-3xl shadow-md inline-block mb-3 relative">
+                                    <div id="qrcode"></div>
+                                    <!-- Expired Overlay -->
+                                    <div id="qr-expired-overlay" class="hidden absolute inset-0 bg-slate-900/85 backdrop-blur-xs rounded-3xl flex flex-col items-center justify-center text-white p-4">
+                                        <i data-lucide="clock-alert" class="w-10 h-10 text-rose-400 mb-2"></i>
+                                        <p class="font-extrabold text-base">WAKTU HABIS</p>
+                                        <p class="text-xs text-slate-300 mt-1">Barcode kedaluwarsa (5 Menit)</p>
+                                    </div>
+                                </div>
+
+                                <!-- Token Display -->
+                                <div class="flex items-center gap-2 bg-white/80 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold text-slate-700 mb-3 shadow-xs">
+                                    <span id="qr-token-text">TOKEN-XXXX</span>
+                                    <button onclick="copyActiveToken()" title="Salin Token" class="text-blue-600 hover:text-blue-800">
+                                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Countdown Timer -->
+                                <div class="w-full bg-white/70 rounded-2xl p-3 flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                                        <i data-lucide="timer" class="w-4 h-4 text-blue-600"></i> Sisa Waktu Berlaku:
+                                    </span>
+                                    <span id="qr-timer-display" class="text-xl font-black font-mono text-blue-600">05:00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button onclick="generateSessionQR()" class="clay-btn clay-btn-primary py-3.5 px-4 text-sm flex items-center justify-center gap-2">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            <span id="btn-generate-text">Generate QR (5 Menit)</span>
+                        </button>
+                        <button onclick="stopSessionQR()" class="clay-btn bg-slate-100 text-slate-700 py-3.5 px-4 text-sm flex items-center justify-center gap-2">
+                            <i data-lucide="square" class="w-4 h-4 text-rose-500"></i>
+                            <span>Tutup Sesi</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Geolocation Setup & Quick Stats (7 cols) -->
+                <div class="lg:col-span-7 flex flex-col gap-6">
+                    
+                    <!-- Geolocation Configuration Card -->
+                    <div class="clay-card p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h2 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                                    <i data-lucide="map-pin" class="w-5 h-5 text-emerald-500"></i>
+                                    Titik Koordinat Lokasi Kelas (GPS)
+                                </h2>
+                                <p class="text-xs text-slate-500">Mahasiswa wajib berada dalam radius yang ditentukan untuk dapat melakukan absensi.</p>
+                            </div>
+                            <span id="dosen-loc-status" class="clay-pill px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold self-start sm:self-center">Belum Diset</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Latitude</label>
+                                <input type="number" step="any" id="dosen-lat" placeholder="-5.397140" class="clay-input w-full px-3.5 py-2.5 text-sm font-mono font-bold text-slate-700">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Longitude</label>
+                                <input type="number" step="any" id="dosen-lng" placeholder="105.266789" class="clay-input w-full px-3.5 py-2.5 text-sm font-mono font-bold text-slate-700">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Radius Toleransi (Meter)</label>
+                                <input type="number" id="dosen-radius" value="100" min="10" max="5000" class="clay-input w-full px-3.5 py-2.5 text-sm font-mono font-bold text-slate-700">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2.5">
+                            <button onclick="getDosenCurrentLocation()" class="clay-btn clay-btn-mint px-4 py-2.5 text-xs sm:text-sm flex items-center gap-2">
+                                <i data-lucide="navigation" class="w-4 h-4"></i>
+                                <span>Gunakan Lokasi GPS Saya Saat Ini</span>
+                            </button>
+                            <button onclick="setSimulatedCampusLocation()" class="clay-btn clay-panel-lavender px-4 py-2.5 text-xs sm:text-sm text-indigo-800 flex items-center gap-2">
+                                <i data-lucide="compass" class="w-4 h-4"></i>
+                                <span>Simulasi Titik Kampus</span>
+                            </button>
+                            <button onclick="saveDosenLocationManual()" class="clay-btn bg-white text-slate-700 px-4 py-2.5 text-xs sm:text-sm flex items-center gap-2">
+                                <i data-lucide="save" class="w-4 h-4 text-blue-500"></i>
+                                <span>Simpan Koordinat</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Metrics for Selected Meeting -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="clay-panel-blue p-4 text-center">
+                            <p class="text-xs font-bold text-blue-700 uppercase">Total Peserta</p>
+                            <p id="stat-total" class="text-2xl sm:text-3xl font-black text-slate-800 mt-1">137</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Mahasiswa</p>
+                        </div>
+                        <div class="clay-panel-mint p-4 text-center">
+                            <p class="text-xs font-bold text-emerald-700 uppercase">Hadir</p>
+                            <p id="stat-hadir" class="text-2xl sm:text-3xl font-black text-emerald-800 mt-1">0</p>
+                            <p id="stat-hadir-pct" class="text-[11px] text-emerald-700 font-semibold mt-0.5">0%</p>
+                        </div>
+                        <div class="clay-panel-lavender p-4 text-center">
+                            <p class="text-xs font-bold text-purple-700 uppercase">Izin / Sakit</p>
+                            <p id="stat-izin" class="text-2xl sm:text-3xl font-black text-purple-800 mt-1">0</p>
+                            <p class="text-[11px] text-purple-700 font-semibold mt-0.5">Tercatat</p>
+                        </div>
+                        <div class="clay-panel-peach p-4 text-center">
+                            <p class="text-xs font-bold text-amber-800 uppercase">Belum Absen</p>
+                            <p id="stat-alpha" class="text-2xl sm:text-3xl font-black text-amber-900 mt-1">137</p>
+                            <p class="text-[11px] text-amber-800 font-semibold mt-0.5">Alpha</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Attendance Recap & CSV Export Section -->
+            <div class="clay-card p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-slate-800">Rekapan Kehadiran Mahasiswa</h2>
+                        <p class="text-xs sm:text-sm text-slate-500">Pantau kehadiran per pertemuan atau lihat matriks lengkap Pertemuan 1 s.d. 16.</p>
+                    </div>
+
+                    <!-- View Tab & Export Buttons -->
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <div class="clay-input p-1 flex gap-1">
+                            <button id="tab-recap-single" onclick="switchRecapTab('single')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-blue-600 shadow-xs">
+                                Pertemuan Aktif
+                            </button>
+                            <button id="tab-recap-all" onclick="switchRecapTab('all')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900">
+                                Matriks 1–16
+                            </button>
+                        </div>
+
+                        <button onclick="downloadCSVSingleMeeting()" class="clay-btn clay-btn-primary px-4 py-2.5 text-xs flex items-center gap-1.5">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>CSV Pertemuan Ini</span>
+                        </button>
+                        <button onclick="downloadCSVAllMeetings()" class="clay-btn clay-btn-mint px-4 py-2.5 text-xs flex items-center gap-1.5">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                            <span>CSV Rekap 1–16</span>
+                        </button>
+                        <button onclick="confirmResetAllData()" class="clay-btn bg-rose-50 text-rose-600 px-3.5 py-2.5 text-xs flex items-center gap-1.5" title="Reset Semua Data Demo">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Reset Data</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search & Filter Bar -->
+                <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-4 top-3.5"></i>
+                        <input type="text" id="dosen-search-input" oninput="renderDosenTables()" placeholder="Cari berdasarkan NIM atau Nama Mahasiswa..." class="clay-input w-full pl-10 pr-4 py-2.5 text-sm font-medium">
+                    </div>
+                    <select id="dosen-status-filter" onchange="renderDosenTables()" class="clay-input px-4 py-2.5 text-sm font-bold text-slate-700">
+                        <option value="ALL">Semua Status</option>
+                        <option value="Hadir">Hadir</option>
+                        <option value="Izin">Izin / Sakit</option>
+                        <option value="Alpha">Belum Absen (Alpha)</option>
+                    </select>
+                </div>
+
+                <!-- TABLE 1: Single Meeting Detail Table -->
+                <div id="recap-single-container" class="overflow-x-auto rounded-2xl border border-white/80 shadow-inner bg-white/50">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-blue-50/80 text-slate-600 text-xs uppercase tracking-wider border-b border-blue-100">
+                                <th class="py-3.5 px-4 font-extrabold">NIM</th>
+                                <th class="py-3.5 px-4 font-extrabold">Nama Mahasiswa</th>
+                                <th class="py-3.5 px-4 font-extrabold">Status (<span id="tbl-meeting-label">P1</span>)</th>
+                                <th class="py-3.5 px-4 font-extrabold">Waktu Scan</th>
+                                <th class="py-3.5 px-4 font-extrabold">Jarak GPS</th>
+                                <th class="py-3.5 px-4 font-extrabold text-right">Ubah Manual</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dosen-single-tbody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- TABLE 2: Full Matrix Pertemuan 1-16 -->
+                <div id="recap-all-container" class="hidden overflow-x-auto rounded-2xl border border-white/80 shadow-inner bg-white/50">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-indigo-50/90 text-slate-700 uppercase tracking-wider border-b border-indigo-100">
+                                <th class="py-3 px-3 font-extrabold sticky left-0 bg-indigo-50 z-10">NIM</th>
+                                <th class="py-3 px-3 font-extrabold sticky left-12 bg-indigo-50 z-10 min-w-[180px]">Nama Mahasiswa</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P1</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P2</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P3</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P4</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P5</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P6</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P7</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P8</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P9</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P10</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P11</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P12</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P13</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P14</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P15</th>
+                                <th class="py-3 px-2 text-center font-extrabold">P16</th>
+                                <th class="py-3 px-3 text-center font-extrabold bg-emerald-50 text-emerald-800">Hadir</th>
+                                <th class="py-3 px-3 text-center font-extrabold bg-blue-50 text-blue-800">%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dosen-all-tbody" class="divide-y divide-slate-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+
+
+        <!-- ========================================================= -->
+        <!-- VIEW 2: PORTAL MAHASISWA (STUDENT ATTENDANCE PORTAL)      -->
+        <!-- ========================================================= -->
+        <main id="view-mahasiswa" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Step 1 & 2: Student Identity & GPS Verification (5 cols) -->
+                <div class="lg:col-span-5 space-y-6">
+                    
+                    <!-- Identity Card -->
+                    <div class="clay-card p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-extrabold">1</div>
+                            <div>
+                                <h2 class="text-lg font-extrabold text-slate-800">Identitas Mahasiswa</h2>
+                                <p class="text-xs text-slate-500">Pilih NIM atau Nama Anda dari daftar peserta</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="relative">
+                                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-4 top-3.5"></i>
+                                <input type="text" id="mhs-search-filter" oninput="filterStudentDropdown()" placeholder="Ketik NIM atau Nama untuk mencari..." class="clay-input w-full pl-10 pr-4 py-2.5 text-sm">
+                            </div>
+
+                            <select id="mhs-select-nim" onchange="onStudentSelect()" class="clay-input w-full px-4 py-3 text-sm font-bold text-slate-800 cursor-pointer">
+                                <option value="">-- Pilih Mahasiswa (137 Peserta) --</option>
+                            </select>
+
+                            <div id="mhs-profile-badge" class="hidden clay-panel-lavender p-4 flex items-center justify-between">
+                                <div>
+                                    <p class="text-[11px] font-bold text-purple-700 uppercase">Mahasiswa Terpilih</p>
+                                    <p id="mhs-selected-name" class="text-base font-extrabold text-slate-800">-</p>
+                                    <p id="mhs-selected-nim" class="text-xs font-mono font-bold text-purple-700">NIM: -</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="clay-pill px-3 py-1 bg-white text-purple-700 text-xs font-extrabold" id="mhs-total-present-badge">0/16 Hadir</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GPS Location Verification Card -->
+                    <div class="clay-card p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-extrabold">2</div>
+                            <div>
+                                <h2 class="text-lg font-extrabold text-slate-800">Verifikasi Lokasi GPS (Wajib)</h2>
+                                <p class="text-xs text-slate-500">Wajib mengizinkan akses lokasi & berada di area kelas</p>
+                            </div>
+                        </div>
+
+                        <div id="mhs-gps-box" class="clay-panel-peach p-4 mb-4">
+                            <div class="flex items-start gap-3">
+                                <i data-lucide="map-pin-off" id="mhs-gps-icon" class="w-6 h-6 text-amber-700 shrink-0 mt-0.5"></i>
+                                <div class="flex-1">
+                                    <p id="mhs-gps-title" class="text-sm font-extrabold text-amber-900">Lokasi GPS Belum Diaktifkan</p>
+                                    <p id="mhs-gps-desc" class="text-xs text-amber-800 mt-1">Klik tombol di bawah untuk mengizinkan akses lokasi browser Anda sebelum melakukan scan barcode.</p>
+                                    <div id="mhs-gps-coords" class="hidden mt-2 pt-2 border-t border-black/10 text-[11px] font-mono text-slate-700 space-y-0.5">
+                                        <p>Posisi Anda: <span id="mhs-lat-lng">-</span></p>
+                                        <p>Jarak ke Kelas: <span id="mhs-distance-text" class="font-bold">-</span> (Maks: <span id="mhs-max-radius">-</span>m)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-2.5">
+                            <button onclick="requestStudentGPS()" class="clay-btn clay-btn-mint flex-1 py-3 px-4 text-xs sm:text-sm flex items-center justify-center gap-2">
+                                <i data-lucide="locate-fixed" class="w-4 h-4"></i>
+                                <span>Cek & Izinkan Lokasi GPS</span>
+                            </button>
+                            <button onclick="simulateStudentNearCampus()" class="clay-btn bg-white text-slate-700 py-3 px-3.5 text-xs flex items-center justify-center gap-1.5" title="Simulasi GPS di Lokasi Kelas">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-indigo-500"></i>
+                                <span>Simulasi GPS</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Step 3: QR Scanner & Attendance Submission (7 cols) -->
+                <div class="lg:col-span-7 clay-card p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center font-extrabold">3</div>
+                                <div>
+                                    <h2 class="text-lg font-extrabold text-slate-800">Scan Barcode / QR Pertemuan</h2>
+                                    <p class="text-xs text-slate-500">Gunakan kamera atau simulasi scan QR sesi aktif</p>
+                                </div>
+                            </div>
+                            <div id="mhs-active-session-pill" class="clay-pill px-3.5 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold self-start sm:self-center">
+                                Mengecek Sesi Dosen...
+                            </div>
+                        </div>
+
+                        <!-- Camera Reader Area -->
+                        <div class="clay-panel-blue p-5 mb-5">
+                            <div id="reader-wrapper" class="bg-slate-900 rounded-2xl overflow-hidden relative min-h-[240px] flex flex-col items-center justify-center text-white">
+                                <div id="qr-reader" class="w-full"></div>
+                                <div id="camera-placeholder" class="p-6 text-center">
+                                    <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
+                                        <i data-lucide="camera" class="w-8 h-8 text-blue-300"></i>
+                                    </div>
+                                    <p class="text-sm font-bold">Kamera Pemindai Siap</p>
+                                    <p class="text-xs text-slate-300 mt-1 max-w-sm mx-auto">Klik "Buka Kamera Scan" untuk memindai QR Code dari layar Dosen, atau gunakan tombol Simulasi Scan di bawah.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap gap-3 mt-4">
+                                <button id="btn-start-camera" onclick="startCameraScanner()" class="clay-btn clay-btn-primary flex-1 py-3 px-4 text-xs sm:text-sm flex items-center justify-center gap-2">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <span>Buka Kamera Scan</span>
+                                </button>
+                                <button id="btn-stop-camera" onclick="stopCameraScanner()" class="hidden clay-btn clay-btn-danger py-3 px-4 text-xs sm:text-sm flex items-center justify-center gap-2">
+                                    <i data-lucide="camera-off" class="w-4 h-4"></i>
+                                    <span>Matikan Kamera</span>
+                                </button>
+                                <button onclick="simulateScanActiveQR()" class="clay-btn clay-btn-lavender flex-1 py-3 px-4 text-xs sm:text-sm flex items-center justify-center gap-2">
+                                    <i data-lucide="scan-line" class="w-4 h-4"></i>
+                                    <span>Simulasi Scan QR Aktif</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Manual Token Input Fallback -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Atau Masukkan Kode Token Barcode Manual</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="mhs-manual-token" placeholder="Contoh: CLY-P1-XXXXXX" class="clay-input flex-1 px-4 py-2.5 text-sm font-mono uppercase">
+                                <button onclick="submitManualToken()" class="clay-btn bg-white text-blue-600 px-5 py-2.5 text-sm font-extrabold">
+                                    Kirim Absen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Result Feedback Box -->
+                    <div id="mhs-result-banner" class="hidden rounded-2xl p-4 border-2">
+                        <div class="flex items-center gap-3">
+                            <i id="mhs-result-icon" data-lucide="check-circle-2" class="w-7 h-7 shrink-0"></i>
+                            <div>
+                                <h4 id="mhs-result-title" class="font-extrabold text-sm">-</h4>
+                                <p id="mhs-result-msg" class="text-xs mt-0.5">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Personal Attendance History (Pertemuan 1-16) -->
+            <div class="clay-card p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-800">Riwayat Kehadiran Pribadi (Pertemuan 1 – 16)</h3>
+                        <p class="text-xs text-slate-500">Pilih nama Anda di atas untuk melihat rincian kehadiran tiap pertemuan.</p>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-bold">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span> Hadir</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-purple-400 inline-block"></span> Izin</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-300 inline-block"></span> Belum/Alpha</span>
+                    </div>
+                </div>
+
+                <div id="mhs-history-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+                    <!-- 16 Meeting Cards populated by JS -->
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. EMBEDDED STUDENT DATA (137 STUDENTS FROM Persebatan Titik.txt)
+        // =========================================================================
+        const STUDENTS_DATA = [
+            { nim: "1", nama: "Leni Marizka" },
+            { nim: "2", nama: "Habibi Qurrotu Aini" },
+            { nim: "3", nama: "Gilang Rafly Hermansyah" },
+            { nim: "4", nama: "Diva Aulia Putri" },
+            { nim: "5", nama: "Abelia Dwi Ariyanto" },
+            { nim: "6", nama: "Alya Mufidah" },
+            { nim: "7", nama: "Diffi Putri Athaya" },
+            { nim: "8", nama: "Aliya Dian Susanti" },
+            { nim: "9", nama: "Afif Ardean" },
+            { nim: "10", nama: "Siti Nur Asmilah" },
+            { nim: "11", nama: "Krisna Gloria Grace Ambarita" },
+            { nim: "12", nama: "Windy Oktavia Nadeak" },
+            { nim: "13", nama: "Rayza Virta Safitri" },
+            { nim: "14", nama: "Syakira Nova Amelya" },
+            { nim: "15", nama: "Naila Sakinah Rendra Putri" },
+            { nim: "16", nama: "Dimas Rolando Jahri Ndruru" },
+            { nim: "17", nama: "Adelia Afrianti" },
+            { nim: "18", nama: "Sekar Dwi Asih" },
+            { nim: "19", nama: "Siska E Pakpahan" },
+            { nim: "20", nama: "Zuhdi Irsadi" },
+            { nim: "21", nama: "Davly Togu Pardamean Simangunsong" },
+            { nim: "22", nama: "Marcelina Claudia Saragih" },
+            { nim: "23", nama: "Achmad Nazaruddin" },
+            { nim: "24", nama: "Mahryza Poetra Permana Billah" },
+            { nim: "25", nama: "Dimas Bagus Noor Abyand" },
+            { nim: "26", nama: "Devina Rahma Saskia" },
+            { nim: "27", nama: "M. Vicky Akbar" },
+            { nim: "28", nama: "Vina Ulandari" },
+            { nim: "29", nama: "Rafika Dian Amandes" },
+            { nim: "30", nama: "Melinda Veronika Manik" },
+            { nim: "31", nama: "Athallah Salman" },
+            { nim: "32", nama: "Sariah Nasari Siallagan" },
+            { nim: "33", nama: "Syifa Al Zahra" },
+            { nim: "34", nama: "Mella Febryana" },
+            { nim: "35", nama: "RIZKI OKTAVIANI" },
+            { nim: "36", nama: "M. Irfan" },
+            { nim: "37", nama: "Henrico Dahlan Simatupang" },
+            { nim: "38", nama: "Noel Christian Desloni. N" },
+            { nim: "39", nama: "Rheifhaldo Firza Navis" },
+            { nim: "40", nama: "Vivi Amelia Agatha" },
+            { nim: "41", nama: "Hilal Maulid Nazardi" },
+            { nim: "42", nama: "Zaki Yusuf Qodrowi" },
+            { nim: "43", nama: "Asham Rahan Zalria" },
+            { nim: "44", nama: "Ajeng Siti Rahayu" },
+            { nim: "45", nama: "Ria Meliyza" },
+            { nim: "46", nama: "Viki Andrean" },
+            { nim: "47", nama: "Diana Warman" },
+            { nim: "48", nama: "Intan Nuraisyah" },
+            { nim: "49", nama: "Bintang Nito Alfath" },
+            { nim: "50", nama: "Hemas Paramesti" },
+            { nim: "51", nama: "Nova Astuti" },
+            { nim: "52", nama: "Florentina Isabelia Tobing" },
+            { nim: "53", nama: "Beckham Assa Marolop Hutabarat" },
+            { nim: "54", nama: "Karisa Zahro" },
+            { nim: "55", nama: "Angel Fathonah" },
+            { nim: "57", nama: "Rahmi Aryati" },
+            { nim: "58", nama: "Lutfi Fadilla" },
+            { nim: "59", nama: "Dinda Nurhayati" },
+            { nim: "60", nama: "M. Daffa Yufrizal" },
+            { nim: "61", nama: "Sulthan Araziq" },
+            { nim: "62", nama: "Anugrah Cahyani" },
+            { nim: "63", nama: "Dion Pratama Simamora" },
+            { nim: "64", nama: "Muhammad Yunus Kifli" },
+            { nim: "65", nama: "Akbar Damara Daffa" },
+            { nim: "66", nama: "Rizka Aulia Septianingrum" },
+            { nim: "67", nama: "Agathis Putra Epriza Oktora" },
+            { nim: "68", nama: "Waja Subisma" },
+            { nim: "69", nama: "Daviya Assyara Lova" },
+            { nim: "70", nama: "Laila Azzahra Putri Ridho" },
+            { nim: "71", nama: "Sakti Artadinata Ramadhan" },
+            { nim: "72", nama: "Fika Armelia" },
+            { nim: "73", nama: "Carolins Agatha Br Simbolon" },
+            { nim: "74", nama: "Rasyfa Muhamad Rafli" },
+            { nim: "75", nama: "Strata Agung Persada M." },
+            { nim: "76", nama: "I Gusti Ayu Windestry Devi" },
+            { nim: "77", nama: "Ahmad Dahlan Juliawan Hasibuan" },
+            { nim: "78", nama: "Muhammad Aziz" },
+            { nim: "79", nama: "Dheya Nabila Meisya Putri" },
+            { nim: "80", nama: "Rizki Maulana" },
+            { nim: "81", nama: "Sasneta Margaretha Sihombing" },
+            { nim: "82", nama: "Yul Dwi Muqarrib" },
+            { nim: "83", nama: "Ridho Naufal Attalla" },
+            { nim: "84", nama: "Paris Simanjuntak" },
+            { nim: "86", nama: "Novita Ariyanti" },
+            { nim: "87", nama: "Ananta Krisnanto" },
+            { nim: "88", nama: "Aldo Priski Sihombing" },
+            { nim: "89", nama: "Zarima Anifah" },
+            { nim: "90", nama: "Alfansa Eka Widyanto" },
+            { nim: "91", nama: "Charlie Elsan Prasetya Hulu" },
+            { nim: "92", nama: "Muslim Riadi" },
+            { nim: "93", nama: "Katharina Listania Putri" },
+            { nim: "95", nama: "Muhammad Daffa" },
+            { nim: "96", nama: "Aditya Prayoga" },
+            { nim: "97", nama: "Dinda Bintang Julytantia" },
+            { nim: "98", nama: "Brayn Fran's Halomoan Simanjuntak" },
+            { nim: "99", nama: "Absalom Elbonardo Cesare Hasugian" },
+            { nim: "100", nama: "Ruben Bahari Tampubolon" },
+            { nim: "101", nama: "Risya Cahya Meivia" },
+            { nim: "102", nama: "M. Raynaldhi Adrico Juniar" },
+            { nim: "104", nama: "Arjun Oppusunggu" },
+            { nim: "105", nama: "Fahri Putra" },
+            { nim: "106", nama: "Serin" },
+            { nim: "107", nama: "Philip Anugrah Alexander" },
+            { nim: "108", nama: "Marchel Ronaldo Simangunsong" },
+            { nim: "109", nama: "Cifli A. Nainggolan" },
+            { nim: "110", nama: "Patricya Lamtio Sari Pratiwi Nasution" },
+            { nim: "111", nama: "Daffa Tsabitah Akbar" },
+            { nim: "112", nama: "Dirga Cahyo" },
+            { nim: "113", nama: "Hafizuddin Ghani Ifkar" },
+            { nim: "114", nama: "Tri Irga Kurniawan. CA" },
+            { nim: "115", nama: "Ammar Abdurrahman" },
+            { nim: "116", nama: "Repiyana Putri Sahera" },
+            { nim: "117", nama: "Hiskia Edwardo Sijabat" },
+            { nim: "118", nama: "Bachtiar Riva" },
+            { nim: "119", nama: "Raditya Viendra" },
+            { nim: "120", nama: "M. Ferdian Yusuf" },
+            { nim: "121", nama: "Marsella Hutagaol" },
+            { nim: "122", nama: "Farel Hamka Aji Pratama" },
+            { nim: "123", nama: "Esra Dormiana Br. Rumapea" },
+            { nim: "124", nama: "Kristian Rio Aritonang" },
+            { nim: "125", nama: "Marcellino Fras Jaya Sianipar" },
+            { nim: "126", nama: "Dimas Miraj Erlangga" },
+            { nim: "128", nama: "Tegar Adi Nugroho" },
+            { nim: "129", nama: "Rian Dearson Simanjuntak" },
+            { nim: "130", nama: "Dessy Amellina Putri" },
+            { nim: "131", nama: "Fran Rikki Sianipar" },
+            { nim: "132", nama: "Yusuf Anaqi" },
+            { nim: "133", nama: "Rasya Risaldo" },
+            { nim: "134", nama: "Syifa Novela Anggraeni" },
+            { nim: "135", nama: "Made Briandhika Julistio" },
+            { nim: "137", nama: "M. Yudha Farrulian AZ" },
+            { nim: "138", nama: "Muhammad Kelvin Dedy Hariyadi" },
+            { nim: "139", nama: "M. Anwar Faiz Absor" },
+            { nim: "140", nama: "Ahmad Pasha Oganta" },
+            { nim: "141", nama: "M. Naufal" },
+            { nim: "142", nama: "Indra Ryan" },
+            { nim: "143", nama: "Fitrah Al Baihaqi" }
+        ];
+
+        // =========================================================================
+        // 2. APPLICATION STATE & LOCALSTORAGE MANAGEMENT
+        // =========================================================================
+        const STORAGE_KEY = 'clayattend_state_v2';
+        const QR_DURATION_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+        let appState = {
+            selectedMeeting: 1,
+            dosenLocation: {
+                lat: null,
+                lng: null,
+                radius: 100
+            },
+            activeSession: null, // { meeting: 1, token: '...', createdAt: timestamp, expiresAt: timestamp, lat, lng, radius }
+            // attendance[meetingNumber][nim] = { status: 'Hadir'|'Izin'|'Alpha', time: 'HH:MM:SS', distance: 12 }
+            attendance: {}
+        };
+
+        let timerInterval = null;
+        let html5QrScanner = null;
+        let studentGPS = {
+            granted: false,
+            lat: null,
+            lng: null,
+            distance: null,
+            withinRadius: false
+        };
+        let currentRecapTab = 'single';
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = { ...appState, ...parsed };
+                }
+            } catch (e) {
+                console.error("Gagal memuat state dari localStorage:", e);
+            }
+            // Ensure attendance structure exists for meetings 1..16
+            for (let m = 1; m <= 16; m++) {
+                if (!appState.attendance[m]) {
+                    appState.attendance[m] = {};
+                }
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error("Gagal menyimpan state:", e);
+            }
+        }
+
+        // =========================================================================
+        // 3. UI NOTIFICATIONS (TOAST & CONFIRM MODAL - NO ALERT/CONFIRM)
+        // =========================================================================
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-emerald-50 border-emerald-200 text-emerald-900',
+                error: 'bg-rose-50 border-rose-200 text-rose-900',
+                warning: 'bg-amber-50 border-amber-200 text-amber-900',
+                info: 'bg-blue-50 border-blue-200 text-blue-900'
+            };
+            const iconColors = {
+                success: 'text-emerald-500',
+                error: 'text-rose-500',
+                warning: 'text-amber-500',
+                info: 'text-blue-500'
+            };
+            const icons = {
+                success: 'check-circle-2',
+                error: 'x-circle',
+                warning: 'alert-circle',
+                info: 'info'
+            };
+
+            toast.className = `pointer-events-auto clay-card p-4 border-2 ${colors[type]} flex items-start gap-3 transform transition-all duration-300 translate-x-4 opacity-0`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[type]}" class="w-5 h-5 ${iconColors[type]} shrink-0 mt-0.5"></i>
+                <div class="flex-1">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wide">${title}</h4>
+                    <p class="text-xs mt-0.5 opacity-90">${message}</p>
+                </div>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-4', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-4', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function showConfirmModal(title, message, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            okBtn.onclick = () => {
+                cleanup();
+                onConfirm();
+            };
+            cancelBtn.onclick = cleanup;
+        }
+
+        // =========================================================================
+        // 4. ROLE SWITCHER
+        // =========================================================================
+        function switchRole(role) {
+            const viewDosen = document.getElementById('view-dosen');
+            const viewMhs = document.getElementById('view-mahasiswa');
+            const btnDosen = document.getElementById('btn-role-dosen');
+            const btnMhs = document.getElementById('btn-role-mahasiswa');
+
+            if (role === 'dosen') {
+                stopCameraScanner();
+                viewDosen.classList.remove('hidden');
+                viewMhs.classList.add('hidden');
+
+                btnDosen.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all bg-blue-500 text-white shadow-md";
+                btnMhs.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all text-slate-600 hover:text-slate-900";
+
+                renderDosenTables();
+                updateDosenStats();
+            } else {
+                viewDosen.classList.add('hidden');
+                viewMhs.classList.remove('hidden');
+
+                btnMhs.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all bg-indigo-500 text-white shadow-md";
+                btnDosen.className = "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all text-slate-600 hover:text-slate-900";
+
+                updateStudentSessionBanner();
+                evaluateStudentGPS();
+                renderStudentHistory();
+            }
+        }
+
+        // =========================================================================
+        // 5. HAVERSINE DISTANCE CALCULATION (GPS RADIUS)
+        // =========================================================================
+        function calculateHaversineMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Earth radius in meters
+            const toRad = (deg) => deg * (Math.PI / 180);
+            const phi1 = toRad(lat1);
+            const phi2 = toRad(lat2);
+            const deltaPhi = toRad(lat2 - lat1);
+            const deltaLambda = toRad(lon2 - lon1);
+
+            const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                      Math.cos(phi1) * Math.cos(phi2) *
+                      Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return Math.round(R * c);
+        }
+
+        // =========================================================================
+        // 6. DOSEN FEATURES: LOCATION, QR GENERATOR, TIMER, RECAP & CSV
+        // =========================================================================
+        function initDosenUI() {
+            const select = document.getElementById('dosen-meeting-select');
+            select.innerHTML = '';
+            for (let i = 1; i <= 16; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Pertemuan Ke-${i} ${i === 8 ? '(UTS)' : i === 16 ? '(UAS)' : ''}`;
+                if (i === appState.selectedMeeting) opt.selected = true;
+                select.appendChild(opt);
+            }
+
+            if (appState.dosenLocation.lat !== null && appState.dosenLocation.lng !== null) {
+                document.getElementById('dosen-lat').value = appState.dosenLocation.lat;
+                document.getElementById('dosen-lng').value = appState.dosenLocation.lng;
+                updateDosenLocBadge(true);
+            }
+            document.getElementById('dosen-radius').value = appState.dosenLocation.radius || 100;
+
+            restoreActiveQRSession();
+            updateDosenStats();
+            renderDosenTables();
+        }
+
+        function onDosenMeetingChange() {
+            appState.selectedMeeting = parseInt(document.getElementById('dosen-meeting-select').value, 10);
+            saveState();
+            updateDosenStats();
+            renderDosenTables();
+        }
+
+        function updateDosenLocBadge(isSet) {
+            const badge = document.getElementById('dosen-loc-status');
+            if (isSet) {
+                badge.textContent = `Aktif (Radius ${appState.dosenLocation.radius}m)`;
+                badge.className = 'clay-pill px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold self-start sm:self-center';
+            } else {
+                badge.textContent = 'Belum Diset';
+                badge.className = 'clay-pill px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold self-start sm:self-center';
+            }
+        }
+
+        function getDosenCurrentLocation() {
+            if (!navigator.geolocation) {
+                showToast('GPS Tidak Didukung', 'Browser Anda tidak mendukung Geolocation API.', 'error');
+                return;
+            }
+            showToast('Mendeteksi GPS...', 'Mohon izinkan akses lokasi pada browser Anda.', 'info');
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = parseFloat(pos.coords.latitude.toFixed(6));
+                    const lng = parseFloat(pos.coords.longitude.toFixed(6));
+                    const radius = parseInt(document.getElementById('dosen-radius').value, 10) || 100;
+
+                    document.getElementById('dosen-lat').value = lat;
+                    document.getElementById('dosen-lng').value = lng;
+
+                    appState.dosenLocation = { lat, lng, radius };
+                    saveState();
+                    updateDosenLocBadge(true);
+                    showToast('Lokasi Kelas Disimpan', `Koordinat GPS berhasil dikunci (${lat}, ${lng}).`, 'success');
+                },
+                (err) => {
+                    showToast('Gagal Mengambil GPS', 'Pastikan izin lokasi aktif atau gunakan tombol Simulasi Titik Kampus.', 'error');
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        function setSimulatedCampusLocation() {
+            // Default coordinates (e.g., Bandar Lampung Campus area)
+            const lat = -5.364512;
+            const lng = 105.243218;
+            const radius = parseInt(document.getElementById('dosen-radius').value, 10) || 100;
+
+            document.getElementById('dosen-lat').value = lat;
+            document.getElementById('dosen-lng').value = lng;
+
+            appState.dosenLocation = { lat, lng, radius };
+            saveState();
+            updateDosenLocBadge(true);
+            showToast('Lokasi Simulasi Aktif', `Koordinat simulasi kampus diset (${lat}, ${lng}).`, 'success');
+        }
+
+        function saveDosenLocationManual() {
+            const lat = parseFloat(document.getElementById('dosen-lat').value);
+            const lng = parseFloat(document.getElementById('dosen-lng').value);
+            const radius = parseInt(document.getElementById('dosen-radius').value, 10) || 100;
+
+            if (isNaN(lat) || isNaN(lng)) {
+                showToast('Koordinat Tidak Valid', 'Masukkan nilai Latitude dan Longitude yang benar.', 'error');
+                return;
+            }
+            appState.dosenLocation = { lat, lng, radius };
+            saveState();
+            updateDosenLocBadge(true);
+            showToast('Pengaturan Tersimpan', `Titik kelas & radius ${radius}m berhasil diperbarui.`, 'success');
+        }
+
+        function generateSessionQR() {
+            // Ensure location is set first
+            const latInput = parseFloat(document.getElementById('dosen-lat').value);
+            const lngInput = parseFloat(document.getElementById('dosen-lng').value);
+            const radiusInput = parseInt(document.getElementById('dosen-radius').value, 10) || 100;
+
+            if (isNaN(latInput) || isNaN(lngInput)) {
+                showToast('Lokasi Kelas Wajib Diisi', 'Silakan klik "Gunakan Lokasi GPS Saya" atau "Simulasi Titik Kampus" terlebih dahulu.', 'warning');
+                return;
+            }
+
+            appState.dosenLocation = { lat: latInput, lng: lngInput, radius: radiusInput };
+            updateDosenLocBadge(true);
+
+            const meeting = appState.selectedMeeting;
+            const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const token = `CLY-P${meeting}-${randomCode}`;
+            const now = Date.now();
+            const expiresAt = now + QR_DURATION_MS;
+
+            appState.activeSession = {
+                meeting,
+                token,
+                createdAt: now,
+                expiresAt,
+                lat: latInput,
+                lng: lngInput,
+                radius: radiusInput
+            };
+            saveState();
+
+            renderQRCodeVisual(appState.activeSession);
+            startQRTimer();
+            showToast('Barcode Absensi Aktif!', `QR Code Pertemuan ${meeting} berlaku selama 5 menit.`, 'success');
+        }
+
+        function renderQRCodeVisual(session) {
+            document.getElementById('qr-placeholder').classList.add('hidden');
+            const activeBox = document.getElementById('qr-active-box');
+            activeBox.classList.remove('hidden');
+            activeBox.classList.add('flex');
+
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+
+            const payload = JSON.stringify({
+                app: 'ClayAttend',
+                token: session.token,
+                meeting: session.meeting,
+                exp: session.expiresAt
+            });
+
+            new QRCode(qrContainer, {
+                text: payload,
+                width: 190,
+                height: 190,
+                colorDark: "#1e293b",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            document.getElementById('qr-token-text').textContent = session.token;
+            document.getElementById('btn-generate-text').textContent = 'Generate Ulang QR';
+        }
+
+        function restoreActiveQRSession() {
+            if (!appState.activeSession) return;
+            renderQRCodeVisual(appState.activeSession);
+            startQRTimer();
+        }
+
+        function startQRTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            const updateTick = () => {
+                if (!appState.activeSession) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+
+                const now = Date.now();
+                const remaining = appState.activeSession.expiresAt - now;
+                const badge = document.getElementById('qr-status-badge');
+                const overlay = document.getElementById('qr-expired-overlay');
+                const timerEl = document.getElementById('qr-timer-display');
+
+                if (remaining <= 0) {
+                    timerEl.textContent = '00:00';
+                    timerEl.classList.replace('text-blue-600', 'text-rose-600');
+                    badge.textContent = `Kedaluwarsa (P${appState.activeSession.meeting})`;
+                    badge.className = 'clay-pill px-3 py-1 bg-rose-100 text-rose-700 text-xs font-bold';
+                    overlay.classList.remove('hidden');
+                    clearInterval(timerInterval);
+                } else {
+                    const mins = Math.floor(remaining / 60000);
+                    const secs = Math.floor((remaining % 60000) / 1000);
+                    timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                    timerEl.classList.replace('text-rose-600', 'text-blue-600');
+                    badge.textContent = `Aktif • Pertemuan ${appState.activeSession.meeting}`;
+                    badge.className = 'clay-pill px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold';
+                    overlay.classList.add('hidden');
+                }
+            };
+
+            updateTick();
+            timerInterval = setInterval(updateTick, 1000);
+        }
+
+        function stopSessionQR() {
+            if (timerInterval) clearInterval(timerInterval);
+            appState.activeSession = null;
+            saveState();
+
+            document.getElementById('qr-placeholder').classList.remove('hidden');
+            const activeBox = document.getElementById('qr-active-box');
+            activeBox.classList.add('hidden');
+            activeBox.classList.remove('flex');
+
+            const badge = document.getElementById('qr-status-badge');
+            badge.textContent = 'Ditutup';
+            badge.className = 'clay-pill px-3 py-1 bg-slate-200 text-slate-600 text-xs font-bold';
+            document.getElementById('btn-generate-text').textContent = 'Generate QR (5 Menit)';
+
+            showToast('Sesi Ditutup', 'Barcode absensi telah dinonaktifkan.', 'info');
+        }
+
+        function copyActiveToken() {
+            if (!appState.activeSession) return;
+            const tempInput = document.createElement('input');
+            tempInput.value = appState.activeSession.token;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('Token Disalin', `Kode ${appState.activeSession.token} disalin ke clipboard.`, 'success');
+        }
+
+        function updateDosenStats() {
+            const m = appState.selectedMeeting;
+            const records = appState.attendance[m] || {};
+            let hadir = 0;
+            let izin = 0;
+
+            STUDENTS_DATA.forEach(s => {
+                const rec = records[s.nim];
+                if (rec) {
+                    if (rec.status === 'Hadir') hadir++;
+                    else if (rec.status === 'Izin') izin++;
+                }
+            });
+
+            const total = STUDENTS_DATA.length;
+            const alpha = total - hadir - izin;
+            const pct = ((hadir / total) * 100).toFixed(1);
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-hadir').textContent = hadir;
+            document.getElementById('stat-hadir-pct').textContent = `${pct}% Kehadiran`;
+            document.getElementById('stat-izin').textContent = izin;
+            document.getElementById('stat-alpha').textContent = alpha;
+            document.getElementById('tbl-meeting-label').textContent = `P${m}`;
+        }
+
+        function switchRecapTab(tab) {
+            currentRecapTab = tab;
+            const btnSingle = document.getElementById('tab-recap-single');
+            const btnAll = document.getElementById('tab-recap-all');
+            const boxSingle = document.getElementById('recap-single-container');
+            const boxAll = document.getElementById('recap-all-container');
+
+            if (tab === 'single') {
+                btnSingle.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-blue-600 shadow-xs';
+                btnAll.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900';
+                boxSingle.classList.remove('hidden');
+                boxAll.classList.add('hidden');
+            } else {
+                btnAll.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-indigo-600 shadow-xs';
+                btnSingle.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900';
+                boxAll.classList.remove('hidden');
+                boxSingle.classList.add('hidden');
+            }
+            renderDosenTables();
+        }
+
+        function setManualAttendance(nim, status) {
+            const m = appState.selectedMeeting;
+            if (!appState.attendance[m]) appState.attendance[m] = {};
+
+            if (status === 'Alpha') {
+                delete appState.attendance[m][nim];
+            } else {
+                const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                appState.attendance[m][nim] = {
+                    status,
+                    time: `${nowStr} (Manual)`,
+                    distance: 0
+                };
+            }
+            saveState();
+            updateDosenStats();
+            renderDosenTables();
+            showToast('Status Diperbarui', `NIM ${nim} diubah menjadi ${status} pada Pertemuan ${m}.`, 'info');
+        }
+
+        function renderDosenTables() {
+            const query = document.getElementById('dosen-search-input').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('dosen-status-filter').value;
+            const m = appState.selectedMeeting;
+            const records = appState.attendance[m] || {};
+
+            const filtered = STUDENTS_DATA.filter(s => {
+                const matchText = s.nim.toLowerCase().includes(query) || s.nama.toLowerCase().includes(query);
+                const currentStatus = records[s.nim]?.status || 'Alpha';
+                const matchStatus = statusFilter === 'ALL' || currentStatus === statusFilter;
+                return matchText && matchStatus;
+            });
+
+            // Render Single Meeting Table
+            if (currentRecapTab === 'single') {
+                const tbody = document.getElementById('dosen-single-tbody');
+                tbody.innerHTML = filtered.map(s => {
+                    const rec = records[s.nim];
+                    const status = rec ? rec.status : 'Alpha';
+                    const time = rec ? rec.time : '-';
+                    const dist = rec && rec.distance !== undefined ? `${rec.distance} m` : '-';
+
+                    let badgeHtml = '';
+                    if (status === 'Hadir') {
+                        badgeHtml = `<span class="clay-pill px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-extrabold">Hadir</span>`;
+                    } else if (status === 'Izin') {
+                        badgeHtml = `<span class="clay-pill px-3 py-1 bg-purple-100 text-purple-700 text-xs font-extrabold">Izin</span>`;
+                    } else {
+                        badgeHtml = `<span class="clay-pill px-3 py-1 bg-slate-200/80 text-slate-600 text-xs font-bold">Alpha</span>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-blue-50/40 transition-colors">
+                            <td class="py-3 px-4 font-mono font-bold text-slate-700">${s.nim}</td>
+                            <td class="py-3 px-4 font-bold text-slate-800">${s.nama}</td>
+                            <td class="py-3 px-4">${badgeHtml}</td>
+                            <td class="py-3 px-4 text-xs font-mono text-slate-600">${time}</td>
+                            <td class="py-3 px-4 text-xs font-mono text-slate-600">${dist}</td>
+                            <td class="py-3 px-4 text-right">
+                                <div class="inline-flex gap-1">
+                                    <button onclick="setManualAttendance('${s.nim}', 'Hadir')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${status === 'Hadir' ? 'bg-emerald-500 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}">H</button>
+                                    <button onclick="setManualAttendance('${s.nim}', 'Izin')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${status === 'Izin' ? 'bg-purple-500 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}">I</button>
+                                    <button onclick="setManualAttendance('${s.nim}', 'Alpha')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${status === 'Alpha' ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">A</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                // Render Full 1-16 Matrix Table
+                const tbodyAll = document.getElementById('dosen-all-tbody');
+                tbodyAll.innerHTML = filtered.map(s => {
+                    let totalHadir = 0;
+                    let colsHtml = '';
+
+                    for (let p = 1; p <= 16; p++) {
+                        const rec = appState.attendance[p]?.[s.nim];
+                        const st = rec ? rec.status : 'A';
+                        if (st === 'Hadir') {
+                            totalHadir++;
+                            colsHtml += `<td class="py-2.5 px-2 text-center font-extrabold text-emerald-600 bg-emerald-50/40">H</td>`;
+                        } else if (st === 'Izin') {
+                            colsHtml += `<td class="py-2.5 px-2 text-center font-extrabold text-purple-600 bg-purple-50/40">I</td>`;
+                        } else {
+                            colsHtml += `<td class="py-2.5 px-2 text-center text-slate-300 font-semibold">-</td>`;
+                        }
+                    }
+
+                    const pct = Math.round((totalHadir / 16) * 100);
+
+                    return `
+                        <tr class="hover:bg-indigo-50/40 transition-colors">
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-700 sticky left-0 bg-white/95">${s.nim}</td>
+                            <td class="py-2.5 px-3 font-bold text-slate-800 sticky left-12 bg-white/95 truncate max-w-[200px]">${s.nama}</td>
+                            ${colsHtml}
+                            <td class="py-2.5 px-3 text-center font-black text-emerald-700 bg-emerald-50/60">${totalHadir}/16</td>
+                            <td class="py-2.5 px-3 text-center font-extrabold text-blue-700 bg-blue-50/60">${pct}%</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // CSV Export Functions
+        function triggerCSVDownload(filename, csvContent) {
+            const BOM = '\uFEFF'; // UTF-8 BOM for proper Excel compatibility
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadCSVSingleMeeting() {
+            const m = appState.selectedMeeting;
+            const records = appState.attendance[m] || {};
+            const rows = [
+                ['NIM', 'Nama Mahasiswa', `Status Pertemuan ${m}`, 'Waktu Absensi', 'Jarak Lokasi (Meter)']
+            ];
+
+            STUDENTS_DATA.forEach(s => {
+                const rec = records[s.nim];
+                rows.push([
+                    s.nim,
+                    `"${s.nama.replace(/"/g, '""')}"`,
+                    rec ? rec.status : 'Alpha',
+                    rec ? `"${rec.time}"` : '-',
+                    rec && rec.distance !== undefined ? rec.distance : '-'
+                ]);
+            });
+
+            const csvString = rows.map(r => r.join(',')).join('\n');
+            triggerCSVDownload(`Rekap_Absensi_Pertemuan_${m}.csv`, csvString);
+            showToast('Unduhan CSV Berhasil', `File Rekap_Absensi_Pertemuan_${m}.csv telah diunduh.`, 'success');
+        }
+
+        function downloadCSVAllMeetings() {
+            const headers = ['NIM', 'Nama Mahasiswa'];
+            for (let p = 1; p <= 16; p++) headers.push(`P${p}`);
+            headers.push('Total Hadir', 'Total Izin', 'Persentase Kehadiran (%)');
+
+            const rows = [headers];
+
+            STUDENTS_DATA.forEach(s => {
+                let hadir = 0;
+                let izin = 0;
+                const row = [s.nim, `"${s.nama.replace(/"/g, '""')}"`];
+
+                for (let p = 1; p <= 16; p++) {
+                    const rec = appState.attendance[p]?.[s.nim];
+                    const st = rec ? rec.status : 'Alpha';
+                    if (st === 'Hadir') {
+                        hadir++;
+                        row.push('Hadir');
+                    } else if (st === 'Izin') {
+                        izin++;
+                        row.push('Izin');
+                    } else {
+                        row.push('Alpha');
+                    }
+                }
+
+                const pct = ((hadir / 16) * 100).toFixed(1);
+                row.push(hadir, izin, `${pct}%`);
+                rows.push(row);
+            });
+
+            const csvString = rows.map(r => r.join(',')).join('\n');
+            triggerCSVDownload('Rekap_Lengkap_Absensi_Pertemuan_1_sd_16.csv', csvString);
+            showToast('Unduhan Rekap 1–16 Berhasil', 'Seluruh data pertemuan 1–16 berhasil diekspor ke CSV.', 'success');
+        }
+
+        function confirmResetAllData() {
+            showConfirmModal(
+                'Reset Seluruh Data Absensi?',
+                'Tindakan ini akan menghapus seluruh rekapan kehadiran Pertemuan 1–16 dan menutup sesi QR aktif.',
+                () => {
+                    localStorage.removeItem(STORAGE_KEY);
+                    appState = {
+                        selectedMeeting: 1,
+                        dosenLocation: { lat: null, lng: null, radius: 100 },
+                        activeSession: null,
+                        attendance: {}
+                    };
+                    for (let m = 1; m <= 16; m++) appState.attendance[m] = {};
+                    saveState();
+                    stopSessionQR();
+                    document.getElementById('dosen-lat').value = '';
+                    document.getElementById('dosen-lng').value = '';
+                    updateDosenLocBadge(false);
+                    updateDosenStats();
+                    renderDosenTables();
+                    showToast('Data Direset', 'Semua data absensi telah dikembalikan ke awal.', 'info');
+                }
+            );
+        }
+
+        // =========================================================================
+        // 7. MAHASISWA FEATURES: DROPDOWN, MANDATORY GPS, QR SCANNER & HISTORY
+        // =========================================================================
+        function initMahasiswaUI() {
+            populateStudentDropdown(STUDENTS_DATA);
+            renderStudentHistory();
+        }
+
+        function populateStudentDropdown(list) {
+            const select = document.getElementById('mhs-select-nim');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Pilih Mahasiswa (' + list.length + ' Peserta) --</option>';
+
+            list.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.nim;
+                opt.textContent = `[NIM ${s.nim}] ${s.nama}`;
+                if (s.nim === currentVal) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function filterStudentDropdown() {
+            const q = document.getElementById('mhs-search-filter').value.toLowerCase().trim();
+            const filtered = STUDENTS_DATA.filter(s =>
+                s.nim.toLowerCase().includes(q) || s.nama.toLowerCase().includes(q)
+            );
+            populateStudentDropdown(filtered);
+            if (filtered.length === 1) {
+                document.getElementById('mhs-select-nim').value = filtered[0].nim;
+                onStudentSelect();
+            }
+        }
+
+        function onStudentSelect() {
+            const nim = document.getElementById('mhs-select-nim').value;
+            const badge = document.getElementById('mhs-profile-badge');
+            document.getElementById('mhs-result-banner').classList.add('hidden');
+
+            if (!nim) {
+                badge.classList.add('hidden');
+                renderStudentHistory();
+                return;
+            }
+
+            const student = STUDENTS_DATA.find(s => s.nim === nim);
+            if (student) {
+                badge.classList.remove('hidden');
+                document.getElementById('mhs-selected-name').textContent = student.nama;
+                document.getElementById('mhs-selected-nim').textContent = `NIM: ${student.nim}`;
+            }
+            renderStudentHistory();
+        }
+
+        function updateStudentSessionBanner() {
+            const pill = document.getElementById('mhs-active-session-pill');
+            if (!appState.activeSession) {
+                pill.textContent = 'Tidak Ada Sesi Barcode Aktif';
+                pill.className = 'clay-pill px-3.5 py-1.5 bg-slate-200 text-slate-600 text-xs font-bold self-start sm:self-center';
+                return;
+            }
+
+            const isExpired = Date.now() > appState.activeSession.expiresAt;
+            if (isExpired) {
+                pill.textContent = `Barcode P${appState.activeSession.meeting} Kedaluwarsa`;
+                pill.className = 'clay-pill px-3.5 py-1.5 bg-rose-100 text-rose-700 text-xs font-bold self-start sm:self-center';
+            } else {
+                pill.textContent = `Sesi Aktif: Pertemuan ${appState.activeSession.meeting}`;
+                pill.className = 'clay-pill px-3.5 py-1.5 bg-emerald-100 text-emerald-700 text-xs font-bold self-start sm:self-center animate-pulse-soft';
+            }
+        }
+
+        function requestStudentGPS() {
+            if (!navigator.geolocation) {
+                showToast('GPS Tidak Didukung', 'Browser Anda tidak mendukung layanan lokasi.', 'error');
+                return;
+            }
+
+            showToast('Meminta Izin Lokasi...', 'Mohon izinkan akses lokasi GPS browser Anda.', 'info');
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    studentGPS.granted = true;
+                    studentGPS.lat = parseFloat(pos.coords.latitude.toFixed(6));
+                    studentGPS.lng = parseFloat(pos.coords.longitude.toFixed(6));
+                    evaluateStudentGPS();
+                    showToast('Lokasi GPS Diterima', 'Koordinat Anda berhasil diperbarui.', 'success');
+                },
+                (err) => {
+                    studentGPS.granted = false;
+                    evaluateStudentGPS();
+                    showToast('Izin Lokasi Ditolak', 'Absensi mewajibkan izin lokasi GPS. Aktifkan izin lokasi browser atau gunakan Simulasi GPS.', 'error');
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        function simulateStudentNearCampus() {
+            const targetLat = appState.activeSession?.lat ?? appState.dosenLocation.lat ?? -5.364512;
+            const targetLng = appState.activeSession?.lng ?? appState.dosenLocation.lng ?? 105.243218;
+
+            // Offset slightly (~12 meters away)
+            studentGPS.granted = true;
+            studentGPS.lat = parseFloat((targetLat + 0.00008).toFixed(6));
+            studentGPS.lng = parseFloat((targetLng + 0.00006).toFixed(6));
+            evaluateStudentGPS();
+            showToast('Simulasi GPS Aktif', 'Posisi Anda disimulasikan berada di dalam area ruang kelas.', 'success');
+        }
+
+        function evaluateStudentGPS() {
+            const box = document.getElementById('mhs-gps-box');
+            const icon = document.getElementById('mhs-gps-icon');
+            const title = document.getElementById('mhs-gps-title');
+            const desc = document.getElementById('mhs-gps-desc');
+            const coordsBox = document.getElementById('mhs-gps-coords');
+
+            const refLat = appState.activeSession?.lat ?? appState.dosenLocation.lat;
+            const refLng = appState.activeSession?.lng ?? appState.dosenLocation.lng;
+            const maxRadius = appState.activeSession?.radius ?? appState.dosenLocation.radius ?? 100;
+
+            if (!studentGPS.granted || studentGPS.lat === null) {
+                box.className = 'clay-panel-peach p-4 mb-4';
+                icon.setAttribute('data-lucide', 'map-pin-off');
+                icon.className = 'w-6 h-6 text-amber-700 shrink-0 mt-0.5';
+                title.className = 'text-sm font-extrabold text-amber-900';
+                title.textContent = 'Lokasi GPS Wajib Diaktifkan';
+                desc.className = 'text-xs text-amber-800 mt-1';
+                desc.textContent = 'Anda belum mengizinkan akses GPS. Klik tombol "Cek & Izinkan Lokasi GPS" sebelum absen.';
+                coordsBox.classList.add('hidden');
+                lucide.createIcons();
+                return;
+            }
+
+            coordsBox.classList.remove('hidden');
+            document.getElementById('mhs-lat-lng').textContent = `${studentGPS.lat}, ${studentGPS.lng}`;
+            document.getElementById('mhs-max-radius').textContent = maxRadius;
+
+            if (refLat === null || refLng === null) {
+                studentGPS.distance = 0;
+                studentGPS.withinRadius = false;
+                box.className = 'clay-panel-peach p-4 mb-4';
+                title.textContent = 'Menunggu Dosen Mengatur Lokasi Kelas';
+                desc.textContent = 'GPS Anda aktif, tetapi Dosen belum menentukan titik lokasi kelas.';
+                document.getElementById('mhs-distance-text').textContent = 'Menunggu titik dosen';
+                lucide.createIcons();
+                return;
+            }
+
+            const dist = calculateHaversineMeters(studentGPS.lat, studentGPS.lng, refLat, refLng);
+            studentGPS.distance = dist;
+            studentGPS.withinRadius = dist <= maxRadius;
+
+            document.getElementById('mhs-distance-text').textContent = `${dist} meter`;
+
+            if (studentGPS.withinRadius) {
+                box.className = 'clay-panel-mint p-4 mb-4';
+                icon.setAttribute('data-lucide', 'map-pin');
+                icon.className = 'w-6 h-6 text-emerald-700 shrink-0 mt-0.5';
+                title.className = 'text-sm font-extrabold text-emerald-900';
+                title.textContent = 'Lokasi Terverifikasi (Dalam Radius Kelas)';
+                desc.className = 'text-xs text-emerald-800 mt-1';
+                desc.textContent = 'Posisi Anda valid! Silakan scan QR Code atau kirim token absensi.';
+            } else {
+                box.className = 'clay-panel-peach p-4 mb-4 border-2 border-rose-300';
+                icon.setAttribute('data-lucide', 'alert-octagon');
+                icon.className = 'w-6 h-6 text-rose-600 shrink-0 mt-0.5';
+                title.className = 'text-sm font-extrabold text-rose-800';
+                title.textContent = 'Di Luar Jangkauan Kelas!';
+                desc.className = 'text-xs text-rose-700 mt-1';
+                desc.textContent = `Jarak Anda ${dist}m melebihi batas maksimal ${maxRadius}m. Absensi dikunci hingga Anda mendekati kelas.`;
+            }
+            lucide.createIcons();
+        }
+
+        // Camera Scanner Functions
+        function startCameraScanner() {
+            const nim = document.getElementById('mhs-select-nim').value;
+            if (!nim) {
+                showToast('Pilih Identitas Dulu', 'Silakan pilih NIM / Nama Anda pada langkah 1.', 'warning');
+                return;
+            }
+
+            document.getElementById('camera-placeholder').classList.add('hidden');
+            document.getElementById('btn-start-camera').classList.add('hidden');
+            document.getElementById('btn-stop-camera').classList.remove('hidden');
+
+            html5QrScanner = new Html5Qrcode("qr-reader");
+            html5QrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                (decodedText) => {
+                    stopCameraScanner();
+                    handleScannedPayload(decodedText);
+                },
+                (errorMessage) => {
+                    // Ignore continuous scan frame errors
+                }
+            ).catch(err => {
+                stopCameraScanner();
+                showToast('Kamera Tidak Tersedia', 'Pastikan izin kamera diberikan atau gunakan fitur Simulasi Scan QR.', 'error');
+            });
+        }
+
+        function stopCameraScanner() {
+            if (html5QrScanner) {
+                html5QrScanner.stop().then(() => {
+                    html5QrScanner.clear();
+                    html5QrScanner = null;
+                }).catch(() => {
+                    html5QrScanner = null;
+                });
+            }
+            document.getElementById('camera-placeholder').classList.remove('hidden');
+            document.getElementById('btn-start-camera').classList.remove('hidden');
+            document.getElementById('btn-stop-camera').classList.add('hidden');
+        }
+
+        function simulateScanActiveQR() {
+            if (!appState.activeSession) {
+                showResultBanner(false, 'Tidak Ada Barcode Aktif', 'Dosen belum membuat QR Code sesi absensi saat ini.');
+                return;
+            }
+            const payload = JSON.stringify({
+                app: 'ClayAttend',
+                token: appState.activeSession.token,
+                meeting: appState.activeSession.meeting,
+                exp: appState.activeSession.expiresAt
+            });
+            handleScannedPayload(payload);
+        }
+
+        function submitManualToken() {
+            const raw = document.getElementById('mhs-manual-token').value.trim().toUpperCase();
+            if (!raw) {
+                showToast('Token Kosong', 'Masukkan kode token dari layar Dosen.', 'warning');
+                return;
+            }
+            handleScannedPayload(raw);
+        }
+
+        function handleScannedPayload(rawData) {
+            const nim = document.getElementById('mhs-select-nim').value;
+            if (!nim) {
+                showResultBanner(false, 'Identitas Belum Dipilih', 'Silakan pilih NIM dan Nama Anda terlebih dahulu pada Langkah 1.');
+                return;
+            }
+
+            // 1. Check Mandatory GPS Permission & Radius
+            evaluateStudentGPS();
+            if (!studentGPS.granted || studentGPS.lat === null) {
+                showResultBanner(false, 'Izin Lokasi GPS Wajib!', 'Anda wajib mengaktifkan dan mengizinkan lokasi GPS pada Langkah 2 sebelum absen.');
+                return;
+            }
+            if (!studentGPS.withinRadius) {
+                showResultBanner(false, 'Lokasi Di Luar Radius Kelas', `Jarak Anda (${studentGPS.distance}m) melebihi batas toleransi kelas.`);
+                return;
+            }
+
+            // 2. Parse Token from QR JSON or Manual String
+            let scannedToken = rawData;
+            try {
+                const parsed = JSON.parse(rawData);
+                if (parsed && parsed.token) {
+                    scannedToken = parsed.token;
+                }
+            } catch (e) {
+                // Treat rawData as plain token string
+            }
+
+            // 3. Validate against Active Dosen Session
+            if (!appState.activeSession) {
+                showResultBanner(false, 'Sesi Tidak Ditemukan', 'Tidak ada sesi barcode yang sedang dibuka oleh Dosen.');
+                return;
+            }
+
+            if (scannedToken !== appState.activeSession.token) {
+                showResultBanner(false, 'Token Barcode Tidak Valid', 'Kode barcode tidak cocok dengan sesi pertemuan yang sedang aktif.');
+                return;
+            }
+
+            // 4. Validate 5-Minute Expiration Window
+            if (Date.now() > appState.activeSession.expiresAt) {
+                showResultBanner(false, 'Barcode Kedaluwarsa (Waktu Habis)', 'Batas waktu 5 menit untuk barcode ini telah berakhir. Minta Dosen untuk generate ulang.');
+                updateStudentSessionBanner();
+                return;
+            }
+
+            // 5. Record Attendance
+            const meeting = appState.activeSession.meeting;
+            const student = STUDENTS_DATA.find(s => s.nim === nim);
+            const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            if (!appState.attendance[meeting]) appState.attendance[meeting] = {};
+            appState.attendance[meeting][nim] = {
+                status: 'Hadir',
+                time: nowStr,
+                distance: studentGPS.distance
+            };
+            saveState();
+
+            showResultBanner(
+                true,
+                `Absensi Pertemuan ${meeting} Berhasil!`,
+                `${student.nama} (NIM ${student.nim}) tercatat HADIR pada pukul ${nowStr} (Jarak: ${studentGPS.distance}m).`
+            );
+            showToast('Absensi Berhasil!', `Kehadiran Anda pada Pertemuan ${meeting} telah tersimpan.`, 'success');
+            renderStudentHistory();
+        }
+
+        function showResultBanner(isSuccess, title, message) {
+            const banner = document.getElementById('mhs-result-banner');
+            const icon = document.getElementById('mhs-result-icon');
+            const titleEl = document.getElementById('mhs-result-title');
+            const msgEl = document.getElementById('mhs-result-msg');
+
+            banner.classList.remove('hidden');
+            if (isSuccess) {
+                banner.className = 'rounded-2xl p-4 border-2 bg-emerald-50 border-emerald-300 text-emerald-900 mt-4';
+                icon.setAttribute('data-lucide', 'check-circle-2');
+                icon.className = 'w-7 h-7 text-emerald-600 shrink-0';
+            } else {
+                banner.className = 'rounded-2xl p-4 border-2 bg-rose-50 border-rose-300 text-rose-900 mt-4';
+                icon.setAttribute('data-lucide', 'x-circle');
+                icon.className = 'w-7 h-7 text-rose-600 shrink-0';
+            }
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+            lucide.createIcons();
+        }
+
+        function renderStudentHistory() {
+            const nim = document.getElementById('mhs-select-nim').value;
+            const grid = document.getElementById('mhs-history-grid');
+            let hadirCount = 0;
+
+            let html = '';
+            for (let p = 1; p <= 16; p++) {
+                const rec = nim ? appState.attendance[p]?.[nim] : null;
+                const status = rec ? rec.status : 'Belum';
+
+                if (status === 'Hadir') hadirCount++;
+
+                let cardStyle = 'bg-slate-100/80 text-slate-500 border-white';
+                let badgeText = 'Belum';
+                if (status === 'Hadir') {
+                    cardStyle = 'clay-panel-mint text-emerald-900';
+                    badgeText = 'Hadir';
+                } else if (status === 'Izin') {
+                    cardStyle = 'clay-panel-lavender text-purple-900';
+                    badgeText = 'Izin';
+                }
+
+                html += `
+                    <div class="${cardStyle} rounded-2xl p-3 text-center border transition-transform hover:scale-105">
+                        <p class="text-[11px] font-extrabold uppercase opacity-75">Pert. ${p}</p>
+                        <p class="text-sm font-black mt-1">${badgeText}</p>
+                        <p class="text-[10px] font-mono opacity-75 mt-0.5 truncate">${rec ? rec.time.split(' ')[0] : '-'}</p>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+            document.getElementById('mhs-total-present-badge').textContent = `${hadirCount}/16 Hadir`;
+        }
+
+        // =========================================================================
+        // 8. INITIALIZATION ON WINDOW LOAD
+        // =========================================================================
+        window.onload = function () {
+            loadState();
+            initDosenUI();
+            initMahasiswaUI();
+            lucide.createIcons();
+
+            // Periodic background check for QR expiration across views
+            setInterval(() => {
+                if (!document.getElementById('view-mahasiswa').classList.contains('hidden')) {
+                    updateStudentSessionBanner();
+                }
+            }, 2000);
+        };
+    </script>
+</body>
+</html>
